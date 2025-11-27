@@ -143,11 +143,11 @@ pub enum SpanEvents {
 impl SpanEvents {
     fn to_fmt_span(self) -> FmtSpan {
         match self {
-            SpanEvents::None => FmtSpan::NONE,
-            SpanEvents::Enter => FmtSpan::ENTER,
-            SpanEvents::Exit => FmtSpan::EXIT,
-            SpanEvents::Full => FmtSpan::ENTER | FmtSpan::EXIT,
-            SpanEvents::Lifecycle => FmtSpan::NEW | FmtSpan::CLOSE,
+            Self::None => FmtSpan::NONE,
+            Self::Enter => FmtSpan::ENTER,
+            Self::Exit => FmtSpan::EXIT,
+            Self::Full => FmtSpan::ENTER | FmtSpan::EXIT,
+            Self::Lifecycle => FmtSpan::NEW | FmtSpan::CLOSE,
         }
     }
 }

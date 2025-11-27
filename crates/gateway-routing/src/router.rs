@@ -212,9 +212,7 @@ impl Router {
         let provider = self.load_balancer.select(&candidates, &criteria, tenant_id)?;
 
         // Apply model transform if any
-        let model = model_transform
-            .map(|t| t.apply(&request.model))
-            .unwrap_or_else(|| request.model.clone());
+        let model = model_transform.map_or_else(|| request.model.clone(), |t| t.apply(&request.model));
 
         let decision = RouteDecision {
             provider_id: provider.id().to_string(),
@@ -279,7 +277,7 @@ impl Router {
     fn merge_actions(
         &self,
         actions: &[&RuleAction],
-        default_model: &str,
+        _default_model: &str,
     ) -> (
         Vec<String>,
         String,

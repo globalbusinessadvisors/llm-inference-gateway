@@ -133,6 +133,7 @@ impl std::str::FromStr for ProviderType {
 /// Provider health status
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
+#[derive(Default)]
 pub enum HealthStatus {
     /// Provider is healthy and accepting requests
     Healthy,
@@ -141,6 +142,7 @@ pub enum HealthStatus {
     /// Provider is unhealthy and should not receive requests
     Unhealthy,
     /// Health status is unknown (e.g., never checked)
+    #[default]
     Unknown,
 }
 
@@ -158,11 +160,6 @@ impl HealthStatus {
     }
 }
 
-impl Default for HealthStatus {
-    fn default() -> Self {
-        Self::Unknown
-    }
-}
 
 impl fmt::Display for HealthStatus {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

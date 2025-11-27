@@ -14,39 +14,80 @@ use thiserror::Error;
 pub enum ValidationError {
     /// Temperature value out of range
     #[error("Invalid temperature {value}: must be between {min} and {max}")]
-    InvalidTemperature { value: f32, min: f32, max: f32 },
+    InvalidTemperature {
+        /// The invalid value provided
+        value: f32,
+        /// Minimum allowed value
+        min: f32,
+        /// Maximum allowed value
+        max: f32,
+    },
 
     /// Max tokens value out of range
     #[error("Invalid max_tokens {value}: must be between {min} and {max}")]
-    InvalidMaxTokens { value: u32, min: u32, max: u32 },
+    InvalidMaxTokens {
+        /// The invalid value provided
+        value: u32,
+        /// Minimum allowed value
+        min: u32,
+        /// Maximum allowed value
+        max: u32,
+    },
 
     /// Top-p value out of range
     #[error("Invalid top_p {value}: must be between {min} and {max}")]
-    InvalidTopP { value: f32, min: f32, max: f32 },
+    InvalidTopP {
+        /// The invalid value provided
+        value: f32,
+        /// Minimum allowed value
+        min: f32,
+        /// Maximum allowed value
+        max: f32,
+    },
 
     /// Top-k value out of range
     #[error("Invalid top_k {value}: must be at least {min}")]
-    InvalidTopK { value: u32, min: u32 },
+    InvalidTopK {
+        /// The invalid value provided
+        value: u32,
+        /// Minimum allowed value
+        min: u32,
+    },
 
     /// Model ID validation failed
     #[error("Invalid model_id: {reason}")]
-    InvalidModelId { reason: String },
+    InvalidModelId {
+        /// Reason for validation failure
+        reason: String,
+    },
 
     /// Request ID validation failed
     #[error("Invalid request_id: {reason}")]
-    InvalidRequestId { reason: String },
+    InvalidRequestId {
+        /// Reason for validation failure
+        reason: String,
+    },
 
     /// Tenant ID validation failed
     #[error("Invalid tenant_id: {reason}")]
-    InvalidTenantId { reason: String },
+    InvalidTenantId {
+        /// Reason for validation failure
+        reason: String,
+    },
 
     /// Provider ID validation failed
     #[error("Invalid provider_id: {reason}")]
-    InvalidProviderId { reason: String },
+    InvalidProviderId {
+        /// Reason for validation failure
+        reason: String,
+    },
 
     /// API key validation failed
     #[error("Invalid api_key: {reason}")]
-    InvalidApiKey { reason: String },
+    InvalidApiKey {
+        /// Reason for validation failure
+        reason: String,
+    },
 }
 
 /// Temperature for sampling (0.0 to 2.0)
@@ -127,7 +168,7 @@ impl MaxTokens {
     /// # Errors
     /// Returns `ValidationError::InvalidMaxTokens` if value is outside [1, 128000]
     pub fn new(value: u32) -> Result<Self, ValidationError> {
-        if value < Self::MIN || value > Self::MAX {
+        if !(Self::MIN..=Self::MAX).contains(&value) {
             return Err(ValidationError::InvalidMaxTokens {
                 value,
                 min: Self::MIN,

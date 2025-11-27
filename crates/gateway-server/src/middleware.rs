@@ -18,7 +18,6 @@ use tracing::{info, info_span, Instrument};
 use uuid::Uuid;
 
 /// Create CORS middleware layer
-#[must_use]
 pub fn cors_layer() -> CorsLayer {
     CorsLayer::new()
         .allow_origin(Any)
@@ -47,9 +46,7 @@ pub async fn request_id_middleware(mut request: Request, next: Next) -> Response
     let request_id = request
         .headers()
         .get("x-request-id")
-        .and_then(|v| v.to_str().ok())
-        .map(String::from)
-        .unwrap_or_else(|| Uuid::new_v4().to_string());
+        .and_then(|v| v.to_str().ok()).map_or_else(|| Uuid::new_v4().to_string(), String::from);
 
     // Add to request extensions
     request.extensions_mut().insert(RequestIdExt(request_id.clone()));
@@ -85,9 +82,7 @@ pub async fn logging_middleware(request: Request, next: Next) -> Response {
     // Get request ID if available
     let request_id = request
         .extensions()
-        .get::<RequestIdExt>()
-        .map(|r| r.0.clone())
-        .unwrap_or_else(|| "unknown".to_string());
+        .get::<RequestIdExt>().map_or_else(|| "unknown".to_string(), |r| r.0.clone());
 
     let span = info_span!(
         "http_request",

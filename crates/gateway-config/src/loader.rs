@@ -14,7 +14,10 @@ use tracing::{debug, info, warn};
 pub enum ConfigError {
     /// File not found
     #[error("Configuration file not found: {path}")]
-    FileNotFound { path: String },
+    FileNotFound {
+        /// The path to the file that was not found
+        path: String,
+    },
 
     /// IO error
     #[error("IO error reading configuration: {0}")]
@@ -38,11 +41,17 @@ pub enum ConfigError {
 
     /// Unsupported format
     #[error("Unsupported configuration format: {extension}")]
-    UnsupportedFormat { extension: String },
+    UnsupportedFormat {
+        /// The file extension that was not supported
+        extension: String,
+    },
 
     /// Environment variable not found
     #[error("Environment variable not found: {name}")]
-    EnvVarNotFound { name: String },
+    EnvVarNotFound {
+        /// The name of the environment variable that was not found
+        name: String,
+    },
 }
 
 /// Configuration source
@@ -183,10 +192,13 @@ impl ConfigLoader {
     /// Substitute environment variables in content
     ///
     /// Supports ${VAR} and ${VAR:-default} syntax
+    ///
+    /// # Panics
+    /// Panics if the regex is invalid (should not happen with static patterns)
+    #[allow(clippy::expect_used)]
     fn substitute_env_vars(content: &str) -> Result<String, ConfigError> {
         let re = regex::Regex::new(r"\$\{([^}]+)\}").expect("valid regex");
         let mut result = content.to_string();
-        let mut errors = Vec::new();
 
         for cap in re.captures_iter(content) {
             let full_match = cap.get(0).expect("match exists").as_str();
@@ -208,7 +220,6 @@ impl ConfigLoader {
                         result = result.replace(full_match, default_val);
                     } else {
                         warn!("Environment variable not found: {}", var_name);
-                        errors.push(var_name.to_string());
                     }
                 }
             }
@@ -224,10 +235,10 @@ impl ConfigLoader {
         // For now, we do a simple overlay where non-default values override
         // In production, this would be more sophisticated
         GatewayConfig {
-            server: if overlay.server.port != ServerConfig::default().port {
-                overlay.server
-            } else {
+            server: if overlay.server.port == ServerConfig::default().port {
                 base.server
+            } else {
+                overlay.server
             },
             providers: if overlay.providers.is_empty() {
                 base.providers

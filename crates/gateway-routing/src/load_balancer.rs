@@ -227,10 +227,9 @@ impl LoadBalancer {
                     active_connections: self
                         .connections
                         .get(&c.id)
-                        .map(|c| c.load(Ordering::Relaxed))
-                        .unwrap_or(0),
-                    avg_latency_ms: metrics.map(|m| m.avg_latency_ms()).unwrap_or(0.0),
-                    success_rate: metrics.map(|m| m.success_rate()).unwrap_or(1.0),
+                        .map_or(0, |c| c.load(Ordering::Relaxed)),
+                    avg_latency_ms: metrics.map_or(0.0, ProviderMetrics::avg_latency_ms),
+                    success_rate: metrics.map_or(1.0, ProviderMetrics::success_rate),
                     is_healthy: c.health.should_route(),
                 }
             })
@@ -315,8 +314,7 @@ impl LoadBalancer {
             active_connections: self
                 .connections
                 .get(provider_id)
-                .map(|c| c.load(Ordering::Relaxed))
-                .unwrap_or(0),
+                .map_or(0, |c| c.load(Ordering::Relaxed)),
         })
     }
 
@@ -338,8 +336,7 @@ impl LoadBalancer {
                         active_connections: self
                             .connections
                             .get(id)
-                            .map(|c| c.load(Ordering::Relaxed))
-                            .unwrap_or(0),
+                            .map_or(0, |c| c.load(Ordering::Relaxed)),
                     },
                 )
             })

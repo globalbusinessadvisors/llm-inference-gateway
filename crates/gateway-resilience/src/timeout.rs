@@ -103,12 +103,9 @@ impl TimeoutManager {
     where
         F: Future<Output = Result<T, GatewayError>>,
     {
-        match tokio::time::timeout(timeout, future).await {
-            Ok(result) => result,
-            Err(_) => {
-                warn!(timeout_ms = timeout.as_millis(), "Request timed out");
-                Err(GatewayError::timeout(timeout))
-            }
+        if let Ok(result) = tokio::time::timeout(timeout, future).await { result } else {
+            warn!(timeout_ms = timeout.as_millis(), "Request timed out");
+            Err(GatewayError::timeout(timeout))
         }
     }
 

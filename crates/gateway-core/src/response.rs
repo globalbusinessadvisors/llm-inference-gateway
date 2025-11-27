@@ -62,7 +62,7 @@ impl GatewayResponse {
     pub fn has_tool_calls(&self) -> bool {
         self.choices
             .first()
-            .map_or(false, |c| c.message.tool_calls.is_some())
+            .is_some_and(|c| c.message.tool_calls.is_some())
     }
 
     /// Get tool calls from the first choice

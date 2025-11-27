@@ -350,8 +350,7 @@ impl LoadBalancingStrategy for LeastConnectionsStrategy {
                 let connections = self
                     .connections
                     .get(&i)
-                    .map(|c| c.load(Ordering::Relaxed))
-                    .unwrap_or(0)
+                    .map_or(0, |c| c.load(Ordering::Relaxed))
                     + p.active_connections;
                 (i, connections)
             })
@@ -548,14 +547,13 @@ impl LoadBalancingStrategy for LatencyBasedStrategy {
                     "Selected by latency (power of two)"
                 );
                 return Some(provider1);
-            } else {
-                debug!(
-                    provider_index = provider2,
-                    latency_ms = latency2.as_millis(),
-                    "Selected by latency (power of two)"
-                );
-                return Some(provider2);
             }
+            debug!(
+                provider_index = provider2,
+                latency_ms = latency2.as_millis(),
+                "Selected by latency (power of two)"
+            );
+            return Some(provider2);
         }
 
         with_latency.first().map(|(idx, _)| *idx)

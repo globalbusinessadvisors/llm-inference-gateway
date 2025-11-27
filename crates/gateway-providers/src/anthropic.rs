@@ -41,7 +41,7 @@ impl AnthropicConfig {
     #[must_use]
     pub fn new(api_key: impl Into<String>) -> Self {
         Self {
-            api_key: SecretString::new(api_key.into().into()),
+            api_key: SecretString::new(api_key.into()),
             base_url: DEFAULT_BASE_URL.to_string(),
             timeout: Duration::from_secs(120),
             models: default_anthropic_models(),
@@ -162,6 +162,10 @@ impl AnthropicProvider {
     }
 
     /// Build request headers
+    ///
+    /// # Panics
+    /// Panics if header values cannot be parsed (should not happen with static strings)
+    #[allow(clippy::expect_used)]
     fn build_headers(&self) -> reqwest::header::HeaderMap {
         let mut headers = reqwest::header::HeaderMap::new();
         headers.insert(
@@ -488,6 +492,7 @@ enum AnthropicContentBlock {
     Text { text: String },
     #[serde(rename = "image")]
     Image { source: ImageSource },
+    #[allow(dead_code)]
     #[serde(rename = "tool_use")]
     ToolUse {
         id: String,
@@ -532,8 +537,10 @@ struct AnthropicResponse {
     id: String,
     #[serde(rename = "type")]
     _type: String,
+    #[allow(dead_code)]
     role: String,
     content: Vec<AnthropicResponseContent>,
+    #[allow(dead_code)]
     model: String,
     stop_reason: Option<String>,
     usage: AnthropicUsage,
@@ -561,6 +568,7 @@ struct AnthropicUsage {
 #[derive(Debug, Deserialize)]
 struct AnthropicError {
     #[serde(rename = "type")]
+    #[allow(dead_code)]
     error_type: String,
     error: AnthropicErrorDetail,
 }
@@ -568,6 +576,7 @@ struct AnthropicError {
 #[derive(Debug, Deserialize)]
 struct AnthropicErrorDetail {
     #[serde(rename = "type")]
+    #[allow(dead_code)]
     error_type: String,
     message: String,
 }
@@ -761,8 +770,8 @@ fn extract_text_content(content: &MessageContent) -> String {
 
 /// Parse a data URL into media type and base64 data
 fn parse_data_url(url: &str) -> Option<(String, String)> {
-    if url.starts_with("data:") {
-        let parts: Vec<&str> = url[5..].splitn(2, ',').collect();
+    if let Some(stripped) = url.strip_prefix("data:") {
+        let parts: Vec<&str> = stripped.splitn(2, ',').collect();
         if parts.len() == 2 {
             let meta = parts[0];
             let data = parts[1].to_string();
@@ -802,14 +811,13 @@ fn transform_response(
     let finish_reason = response
         .stop_reason
         .as_deref()
-        .map(map_stop_reason)
-        .unwrap_or(FinishReason::Stop);
+        .map_or(FinishReason::Stop, map_stop_reason);
 
     // Build choice - with tool calls or content
-    let choice = if !tool_calls.is_empty() {
-        gateway_core::Choice::with_tool_calls(0, tool_calls, finish_reason)
-    } else {
+    let choice = if tool_calls.is_empty() {
         gateway_core::Choice::new(0, content, finish_reason)
+    } else {
+        gateway_core::Choice::with_tool_calls(0, tool_calls, finish_reason)
     };
 
     let response = GatewayResponse::builder()

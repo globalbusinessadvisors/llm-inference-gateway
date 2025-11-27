@@ -63,7 +63,11 @@ impl ServerConfig {
     }
 
     /// Get the socket address
+    ///
+    /// # Panics
+    /// Panics if the host and port cannot be parsed into a valid socket address
     #[must_use]
+    #[allow(clippy::expect_used)]
     pub fn socket_addr(&self) -> SocketAddr {
         format!("{}:{}", self.host, self.port)
             .parse()
@@ -163,6 +167,10 @@ pub enum ServerError {
 }
 
 /// Shutdown signal handler
+///
+/// # Panics
+/// Panics if signal handlers cannot be installed (should not happen on supported platforms)
+#[allow(clippy::expect_used)]
 async fn shutdown_signal() {
     let ctrl_c = async {
         signal::ctrl_c()

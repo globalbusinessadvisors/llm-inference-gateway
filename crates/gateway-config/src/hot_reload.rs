@@ -56,6 +56,7 @@ impl ConfigWatcher {
     ///
     /// # Errors
     /// Returns error if file watching cannot be started
+    #[allow(clippy::unused_async)] // Async used for spawned task
     pub async fn watch_file(&mut self, path: impl AsRef<Path>) -> Result<(), ConfigError> {
         let path = path.as_ref().to_path_buf();
         let config = Arc::clone(&self.config);
@@ -65,7 +66,7 @@ impl ConfigWatcher {
         let (shutdown_tx, mut shutdown_rx) = mpsc::channel::<()>(1);
 
         // Set up file watcher
-        let tx_clone = tx.clone();
+        let tx_clone = tx;
         let path_clone = path.clone();
 
         let mut watcher = notify::recommended_watcher(move |res: Result<Event, notify::Error>| {
@@ -83,13 +84,13 @@ impl ConfigWatcher {
                 }
             }
         })
-        .map_err(|e| ConfigError::Io(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+        .map_err(|e| ConfigError::Io(std::io::Error::other(e)))?;
 
         // Watch the config file's parent directory
         let watch_path = path.parent().unwrap_or(&path);
         watcher
             .watch(watch_path, RecursiveMode::NonRecursive)
-            .map_err(|e| ConfigError::Io(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+            .map_err(|e| ConfigError::Io(std::io::Error::other(e)))?;
 
         info!("Watching configuration file: {}", path.display());
 

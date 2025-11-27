@@ -25,7 +25,7 @@ where
         // Try X-Tenant-ID header first
         if let Some(tenant) = parts.headers.get("x-tenant-id") {
             if let Ok(id) = tenant.to_str() {
-                return Ok(TenantId(Some(id.to_string())));
+                return Ok(Self(Some(id.to_string())));
             }
         }
 
@@ -34,13 +34,13 @@ where
             if let Ok(auth_str) = auth.to_str() {
                 if let Some(key) = auth_str.strip_prefix("Bearer ") {
                     if let Some(tenant) = extract_tenant_from_key(key) {
-                        return Ok(TenantId(Some(tenant)));
+                        return Ok(Self(Some(tenant)));
                     }
                 }
             }
         }
 
-        Ok(TenantId(None))
+        Ok(Self(None))
     }
 }
 
@@ -73,7 +73,7 @@ where
             return Err(ApiError::unauthorized("Empty API key"));
         }
 
-        Ok(ApiKey(api_key.to_string()))
+        Ok(Self(api_key.to_string()))
     }
 }
 
@@ -93,12 +93,12 @@ where
             if let Ok(auth_str) = auth_header.to_str() {
                 if let Some(key) = auth_str.strip_prefix("Bearer ") {
                     if !key.is_empty() {
-                        return Ok(OptionalApiKey(Some(key.to_string())));
+                        return Ok(Self(Some(key.to_string())));
                     }
                 }
             }
         }
-        Ok(OptionalApiKey(None))
+        Ok(Self(None))
     }
 }
 
@@ -120,11 +120,9 @@ where
             .get("x-request-id")
             .or_else(|| parts.headers.get("x-correlation-id"))
             .or_else(|| parts.headers.get("request-id"))
-            .and_then(|v| v.to_str().ok())
-            .map(String::from)
-            .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
+            .and_then(|v| v.to_str().ok()).map_or_else(|| uuid::Uuid::new_v4().to_string(), String::from);
 
-        Ok(RequestId(id))
+        Ok(Self(id))
     }
 }
 
@@ -155,7 +153,7 @@ where
                     .map(String::from)
             });
 
-        Ok(ClientIp(ip))
+        Ok(Self(ip))
     }
 }
 
@@ -174,23 +172,22 @@ where
     async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
         let bytes = axum::body::Bytes::from_request(req, state)
             .await
-            .map_err(|e| ApiError::bad_request(format!("Failed to read request body: {}", e)))?;
+            .map_err(|e| ApiError::bad_request(format!("Failed to read request body: {e}")))?;
 
         let value: T = serde_json::from_slice(&bytes).map_err(|e| {
-            let msg = format!("Invalid JSON: {}", e);
+            let msg = format!("Invalid JSON: {e}");
             debug!(error = %e, "JSON parse error");
             ApiError::bad_request(msg)
         })?;
 
-        Ok(JsonBody(value))
+        Ok(Self(value))
     }
 }
 
 /// Extract tenant from API key if it follows the format sk-tenant_xxx
 fn extract_tenant_from_key(key: &str) -> Option<String> {
     // Format: sk-<tenant>_<key>
-    if key.starts_with("sk-") {
-        let rest = &key[3..];
+    if let Some(rest) = key.strip_prefix("sk-") {
         if let Some(pos) = rest.find('_') {
             let tenant = &rest[..pos];
             if !tenant.is_empty() {

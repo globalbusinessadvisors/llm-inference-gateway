@@ -59,7 +59,7 @@ impl ChatChunk {
     pub fn is_done(&self) -> bool {
         self.choices
             .first()
-            .map_or(false, |c| c.finish_reason.is_some())
+            .is_some_and(|c| c.finish_reason.is_some())
     }
 
     /// Convert to SSE data format

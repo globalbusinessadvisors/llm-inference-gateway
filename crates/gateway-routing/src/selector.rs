@@ -248,7 +248,7 @@ impl ProviderCandidate {
         }
 
         // Priority factor (lower priority number = higher score)
-        score *= 1.0 / (1.0 + (self.priority as f64 / 100.0));
+        score *= 1.0 / (1.0 + (f64::from(self.priority) / 100.0));
 
         // Latency factor
         if let Some(latency) = self.avg_latency_ms {
@@ -267,7 +267,7 @@ impl ProviderCandidate {
         }
 
         // Weight factor
-        score *= self.weight as f64 / 100.0;
+        score *= f64::from(self.weight) / 100.0;
 
         score
     }

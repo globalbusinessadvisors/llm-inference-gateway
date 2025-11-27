@@ -93,7 +93,7 @@ pub async fn get_model(
     let model = models
         .into_iter()
         .find(|m| m.id == model_id)
-        .ok_or_else(|| ApiError::not_found(format!("Model not found: {}", model_id)))?;
+        .ok_or_else(|| ApiError::not_found(format!("Model not found: {model_id}")))?;
 
     Ok(Json(ModelObject::new(&model.id, "system")))
 }
@@ -240,7 +240,7 @@ async fn handle_streaming_request(
         Ok(chunk_stream) => {
             // Record first chunk time
             let first_chunk_received = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
-            let first_chunk_flag = first_chunk_received.clone();
+            let first_chunk_flag = first_chunk_received;
             let tracker = state.tracker.clone();
             let request_id_clone = request_id.clone();
 

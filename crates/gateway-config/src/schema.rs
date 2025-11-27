@@ -12,6 +12,7 @@ use validator::Validate;
 /// Main gateway configuration
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 #[serde(default)]
+#[derive(Default)]
 pub struct GatewayConfig {
     /// Server configuration
     #[validate(nested)]
@@ -38,18 +39,6 @@ pub struct GatewayConfig {
     pub security: SecurityConfig,
 }
 
-impl Default for GatewayConfig {
-    fn default() -> Self {
-        Self {
-            server: ServerConfig::default(),
-            providers: Vec::new(),
-            routing: RoutingConfig::default(),
-            resilience: ResilienceConfig::default(),
-            observability: ObservabilityConfig::default(),
-            security: SecurityConfig::default(),
-        }
-    }
-}
 
 impl GatewayConfig {
     /// Validate the configuration
@@ -248,6 +237,7 @@ impl ProviderConfig {
 /// Provider-specific rate limit configuration
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 #[serde(default)]
+#[derive(Default)]
 pub struct ProviderRateLimitConfig {
     /// Requests per minute
     pub requests_per_minute: Option<u32>,
@@ -259,15 +249,6 @@ pub struct ProviderRateLimitConfig {
     pub max_concurrent: Option<u32>,
 }
 
-impl Default for ProviderRateLimitConfig {
-    fn default() -> Self {
-        Self {
-            requests_per_minute: None,
-            tokens_per_minute: None,
-            max_concurrent: None,
-        }
-    }
-}
 
 /// Routing configuration
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
@@ -308,8 +289,10 @@ impl Default for RoutingConfig {
 /// Load balancing strategy
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[derive(Default)]
 pub enum LoadBalancingStrategy {
     /// Round-robin distribution
+    #[default]
     RoundRobin,
     /// Route to least latency provider
     LeastLatency,
@@ -323,11 +306,6 @@ pub enum LoadBalancingStrategy {
     PrimaryBackup,
 }
 
-impl Default for LoadBalancingStrategy {
-    fn default() -> Self {
-        Self::RoundRobin
-    }
-}
 
 /// Routing rule
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -381,6 +359,7 @@ pub struct MatchConditions {
 /// Resilience configuration
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 #[serde(default)]
+#[derive(Default)]
 pub struct ResilienceConfig {
     /// Circuit breaker configuration
     #[validate(nested)]
@@ -399,16 +378,6 @@ pub struct ResilienceConfig {
     pub timeout: TimeoutConfig,
 }
 
-impl Default for ResilienceConfig {
-    fn default() -> Self {
-        Self {
-            circuit_breaker: CircuitBreakerConfig::default(),
-            retry: RetryConfig::default(),
-            bulkhead: BulkheadConfig::default(),
-            timeout: TimeoutConfig::default(),
-        }
-    }
-}
 
 /// Circuit breaker configuration
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
@@ -569,6 +538,7 @@ impl Default for TimeoutConfig {
 /// Observability configuration
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 #[serde(default)]
+#[derive(Default)]
 pub struct ObservabilityConfig {
     /// Metrics configuration
     #[validate(nested)]
@@ -583,15 +553,6 @@ pub struct ObservabilityConfig {
     pub logging: LoggingConfig,
 }
 
-impl Default for ObservabilityConfig {
-    fn default() -> Self {
-        Self {
-            metrics: MetricsConfig::default(),
-            tracing: TracingConfig::default(),
-            logging: LoggingConfig::default(),
-        }
-    }
-}
 
 /// Metrics configuration
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
@@ -686,8 +647,10 @@ impl Default for LoggingConfig {
 /// Log format
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
+#[derive(Default)]
 pub enum LogFormat {
     /// JSON formatted logs
+    #[default]
     Json,
     /// Human-readable pretty logs
     Pretty,
@@ -695,15 +658,11 @@ pub enum LogFormat {
     Compact,
 }
 
-impl Default for LogFormat {
-    fn default() -> Self {
-        Self::Json
-    }
-}
 
 /// Security configuration
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 #[serde(default)]
+#[derive(Default)]
 pub struct SecurityConfig {
     /// Authentication configuration
     #[validate(nested)]
@@ -717,15 +676,6 @@ pub struct SecurityConfig {
     pub cors: CorsConfig,
 }
 
-impl Default for SecurityConfig {
-    fn default() -> Self {
-        Self {
-            auth: AuthConfig::default(),
-            rate_limiting: RateLimitConfig::default(),
-            cors: CorsConfig::default(),
-        }
-    }
-}
 
 /// Authentication configuration
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
@@ -856,20 +806,17 @@ impl Default for RateLimitConfig {
 /// Rate limit key type
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[derive(Default)]
 pub enum RateLimitKeyBy {
     /// Rate limit by IP address
     Ip,
     /// Rate limit by API key
+    #[default]
     ApiKey,
     /// Rate limit by tenant ID
     Tenant,
 }
 
-impl Default for RateLimitKeyBy {
-    fn default() -> Self {
-        Self::ApiKey
-    }
-}
 
 /// CORS configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]

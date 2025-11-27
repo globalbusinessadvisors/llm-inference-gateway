@@ -159,7 +159,7 @@ impl OpenAIProvider {
         let messages: Vec<OpenAIMessage> = request
             .messages
             .iter()
-            .map(|m| OpenAIMessage::from_gateway_message(m))
+            .map(OpenAIMessage::from_gateway_message)
             .collect();
 
         OpenAIRequest {
@@ -232,7 +232,6 @@ impl OpenAIProvider {
                     function_call: None,
                 },
                 finish_reason: c.finish_reason.map(|r| match r.as_str() {
-                    "stop" => FinishReason::Stop,
                     "length" => FinishReason::Length,
                     "tool_calls" => FinishReason::ToolCalls,
                     "content_filter" => FinishReason::ContentFilter,
@@ -258,70 +257,6 @@ impl OpenAIProvider {
         }
     }
 
-    /// Parse streaming chunk
-    fn parse_chunk(&self, data: &str) -> Result<Option<ChatChunk>, GatewayError> {
-        if data == "[DONE]" {
-            return Ok(None);
-        }
-
-        let chunk: OpenAIChunk = serde_json::from_str(data).map_err(|e| {
-            GatewayError::streaming(format!("Failed to parse chunk: {e}"))
-        })?;
-
-        let choices: Vec<ChunkChoice> = chunk
-            .choices
-            .into_iter()
-            .map(|c| ChunkChoice {
-                index: c.index,
-                delta: ChunkDelta {
-                    role: c.delta.role.map(|r| match r.as_str() {
-                        "assistant" => MessageRole::Assistant,
-                        "user" => MessageRole::User,
-                        "system" => MessageRole::System,
-                        _ => MessageRole::Assistant,
-                    }),
-                    content: c.delta.content,
-                    tool_calls: c.delta.tool_calls.map(|tcs| {
-                        tcs.into_iter()
-                            .map(|tc| gateway_core::streaming::ToolCallDelta {
-                                index: tc.index,
-                                id: tc.id,
-                                tool_type: tc.tool_type,
-                                function: tc.function.map(|f| {
-                                    gateway_core::streaming::FunctionCallDelta {
-                                        name: f.name,
-                                        arguments: f.arguments,
-                                    }
-                                }),
-                            })
-                            .collect()
-                    }),
-                    function_call: None,
-                },
-                finish_reason: c.finish_reason.map(|r| match r.as_str() {
-                    "stop" => FinishReason::Stop,
-                    "length" => FinishReason::Length,
-                    "tool_calls" => FinishReason::ToolCalls,
-                    _ => FinishReason::Stop,
-                }),
-                logprobs: None,
-            })
-            .collect();
-
-        Ok(Some(ChatChunk {
-            id: chunk.id,
-            object: chunk.object,
-            created: chunk.created,
-            model: chunk.model,
-            choices,
-            usage: chunk.usage.map(|u| Usage {
-                prompt_tokens: u.prompt_tokens,
-                completion_tokens: u.completion_tokens,
-                total_tokens: u.total_tokens,
-            }),
-            system_fingerprint: chunk.system_fingerprint,
-        }))
-    }
 }
 
 #[async_trait]
@@ -455,16 +390,12 @@ impl LLMProvider for OpenAIProvider {
                                     .map(|c| ChunkChoice {
                                         index: c.index,
                                         delta: ChunkDelta {
-                                            role: c.delta.role.map(|r| match r.as_str() {
-                                                "assistant" => MessageRole::Assistant,
-                                                _ => MessageRole::Assistant,
-                                            }),
+                                            role: c.delta.role.map(|_| MessageRole::Assistant),
                                             content: c.delta.content,
                                             tool_calls: None,
                                             function_call: None,
                                         },
                                         finish_reason: c.finish_reason.map(|r| match r.as_str() {
-                                            "stop" => FinishReason::Stop,
                                             "length" => FinishReason::Length,
                                             "tool_calls" => FinishReason::ToolCalls,
                                             _ => FinishReason::Stop,
@@ -513,8 +444,7 @@ impl LLMProvider for OpenAIProvider {
         {
             Ok(response) if response.status().is_success() => HealthStatus::Healthy,
             Ok(response) if response.status().as_u16() == 429 => HealthStatus::Degraded,
-            Ok(_) => HealthStatus::Unhealthy,
-            Err(_) => HealthStatus::Unhealthy,
+            Ok(_) | Err(_) => HealthStatus::Unhealthy,
         }
     }
 
@@ -696,6 +626,7 @@ struct OpenAIChoice {
 
 #[derive(Debug, Deserialize)]
 struct OpenAIResponseMessage {
+    #[allow(dead_code)]
     role: String,
     content: Option<String>,
     tool_calls: Option<Vec<OpenAIToolCall>>,
@@ -715,6 +646,7 @@ struct OpenAIChunk {
     created: i64,
     model: String,
     choices: Vec<OpenAIChunkChoice>,
+    #[allow(dead_code)]
     usage: Option<OpenAIUsage>,
     system_fingerprint: Option<String>,
 }
@@ -730,9 +662,11 @@ struct OpenAIChunkChoice {
 struct OpenAIChunkDelta {
     role: Option<String>,
     content: Option<String>,
+    #[allow(dead_code)]
     tool_calls: Option<Vec<OpenAIToolCallDelta>>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 struct OpenAIToolCallDelta {
     index: u32,
@@ -742,6 +676,7 @@ struct OpenAIToolCallDelta {
     function: Option<OpenAIFunctionCallDelta>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 struct OpenAIFunctionCallDelta {
     name: Option<String>,

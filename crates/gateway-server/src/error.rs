@@ -146,26 +146,26 @@ impl From<GatewayError> for ApiError {
     fn from(err: GatewayError) -> Self {
         match &err {
             GatewayError::Validation { message, field, .. } => {
-                let mut api_err = ApiError::bad_request(message);
+                let mut api_err = Self::bad_request(message);
                 if let Some(f) = field {
                     api_err = api_err.with_param(f);
                 }
                 api_err
             }
             GatewayError::Authentication { message } => {
-                ApiError::unauthorized(message)
+                Self::unauthorized(message)
             }
             GatewayError::Authorization { message } => {
-                ApiError::forbidden(message)
+                Self::forbidden(message)
             }
             GatewayError::ModelNotFound { model } => {
-                ApiError::not_found(format!("Model not found: {}", model))
+                Self::not_found(format!("Model not found: {model}"))
             }
             GatewayError::ProviderNotFound { provider } => {
-                ApiError::not_found(format!("Provider not found: {}", provider))
+                Self::not_found(format!("Provider not found: {provider}"))
             }
             GatewayError::NoHealthyProviders { model } => {
-                ApiError::service_unavailable(format!("No healthy provider available for model: {}", model))
+                Self::service_unavailable(format!("No healthy provider available for model: {model}"))
             }
             GatewayError::RateLimit { retry_after, .. } => {
                 let msg = if let Some(after) = retry_after {
@@ -173,35 +173,34 @@ impl From<GatewayError> for ApiError {
                 } else {
                     "Rate limited".to_string()
                 };
-                ApiError::rate_limited(msg)
+                Self::rate_limited(msg)
             }
             GatewayError::Timeout { duration } => {
-                ApiError::gateway_timeout(format!("Request timed out after {:?}", duration))
+                Self::gateway_timeout(format!("Request timed out after {duration:?}"))
             }
             GatewayError::Provider { provider, message, retryable, .. } => {
                 if *retryable {
-                    ApiError::bad_gateway(format!("{}: {}", provider, message))
+                    Self::bad_gateway(format!("{provider}: {message}"))
                 } else {
-                    ApiError::internal(format!("{}: {}", provider, message))
+                    Self::internal(format!("{provider}: {message}"))
                 }
             }
             GatewayError::CircuitBreakerOpen { provider } => {
-                ApiError::service_unavailable(format!("Provider {} is temporarily unavailable", provider))
+                Self::service_unavailable(format!("Provider {provider} is temporarily unavailable"))
             }
             GatewayError::PayloadTooLarge { size, limit } => {
-                ApiError::bad_request(format!(
-                    "Payload too large: {} bytes exceeds limit of {} bytes",
-                    size, limit
+                Self::bad_request(format!(
+                    "Payload too large: {size} bytes exceeds limit of {limit} bytes"
                 ))
             }
             GatewayError::Streaming { message } => {
-                ApiError::internal(format!("Streaming error: {}", message))
+                Self::internal(format!("Streaming error: {message}"))
             }
             GatewayError::Configuration { message } => {
-                ApiError::internal(format!("Configuration error: {}", message))
+                Self::internal(format!("Configuration error: {message}"))
             }
             GatewayError::Internal { message } => {
-                ApiError::internal(message)
+                Self::internal(message)
             }
         }
     }
@@ -209,7 +208,7 @@ impl From<GatewayError> for ApiError {
 
 impl From<serde_json::Error> for ApiError {
     fn from(err: serde_json::Error) -> Self {
-        ApiError::bad_request(format!("JSON parse error: {}", err))
+        Self::bad_request(format!("JSON parse error: {err}"))
     }
 }
 

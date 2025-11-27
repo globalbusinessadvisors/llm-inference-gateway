@@ -304,14 +304,14 @@ impl RequestTracker {
             .filter(|r| r.info.streaming && r.time_to_first_token.is_some())
             .collect();
 
-        let avg_ttft = if !streaming_requests.is_empty() {
+        let avg_ttft = if streaming_requests.is_empty() {
+            None
+        } else {
             let sum: Duration = streaming_requests
                 .iter()
                 .filter_map(|r| r.time_to_first_token)
                 .sum();
             Some(sum / streaming_requests.len() as u32)
-        } else {
-            None
         };
 
         let total_input_tokens: u32 = completed

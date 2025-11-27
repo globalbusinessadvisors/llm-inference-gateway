@@ -347,19 +347,36 @@ impl RuleAction {
 pub enum ModelTransform {
     /// Replace the model name entirely
     #[serde(rename = "replace")]
-    Replace { value: String },
+    Replace {
+        /// The value to replace the model name with
+        value: String,
+    },
     /// Map model names
     #[serde(rename = "map")]
-    Map { mappings: HashMap<String, String> },
+    Map {
+        /// Mapping from original model names to transformed names
+        mappings: HashMap<String, String>,
+    },
     /// Apply regex replacement
     #[serde(rename = "regex")]
-    Regex { pattern: String, replacement: String },
+    Regex {
+        /// The regex pattern to match
+        pattern: String,
+        /// The replacement string
+        replacement: String,
+    },
     /// Strip prefix
     #[serde(rename = "strip_prefix")]
-    StripPrefix { prefix: String },
+    StripPrefix {
+        /// The prefix to strip from the model name
+        prefix: String,
+    },
     /// Strip suffix
     #[serde(rename = "strip_suffix")]
-    StripSuffix { suffix: String },
+    StripSuffix {
+        /// The suffix to strip from the model name
+        suffix: String,
+    },
 }
 
 impl ModelTransform {
@@ -367,21 +384,21 @@ impl ModelTransform {
     #[must_use]
     pub fn apply(&self, model: &str) -> String {
         match self {
-            ModelTransform::Replace { value } => value.clone(),
-            ModelTransform::Map { mappings } => {
+            Self::Replace { value } => value.clone(),
+            Self::Map { mappings } => {
                 mappings.get(model).cloned().unwrap_or_else(|| model.to_string())
             }
-            ModelTransform::Regex { pattern, replacement } => {
+            Self::Regex { pattern, replacement } => {
                 if let Ok(re) = Regex::new(pattern) {
                     re.replace_all(model, replacement.as_str()).to_string()
                 } else {
                     model.to_string()
                 }
             }
-            ModelTransform::StripPrefix { prefix } => {
+            Self::StripPrefix { prefix } => {
                 model.strip_prefix(prefix.as_str()).unwrap_or(model).to_string()
             }
-            ModelTransform::StripSuffix { suffix } => {
+            Self::StripSuffix { suffix } => {
                 model.strip_suffix(suffix.as_str()).unwrap_or(model).to_string()
             }
         }

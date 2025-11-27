@@ -200,7 +200,7 @@ impl ProviderRegistry {
     pub async fn get_healthy_providers(&self) -> Vec<Arc<dyn LLMProvider>> {
         let mut healthy = Vec::new();
 
-        for entry in self.providers.iter() {
+        for entry in &self.providers {
             if !entry.enabled {
                 continue;
             }
@@ -307,7 +307,7 @@ impl ProviderRegistry {
         let mut models = Vec::new();
         let mut seen = std::collections::HashSet::new();
 
-        for entry in self.providers.iter() {
+        for entry in &self.providers {
             if !entry.enabled {
                 continue;
             }
@@ -344,7 +344,7 @@ impl ProviderRegistry {
 
     /// Run health checks on all providers
     pub async fn refresh_health(&self) {
-        for entry in self.providers.iter() {
+        for entry in &self.providers {
             let id = entry.key().clone();
             let provider = Arc::clone(&entry.provider);
 

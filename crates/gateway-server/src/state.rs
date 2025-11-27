@@ -111,6 +111,7 @@ impl AppStateBuilder {
     /// # Panics
     /// Panics if required components are not set
     #[must_use]
+    #[allow(clippy::expect_used)]
     pub fn build(self) -> AppState {
         let config = self.config.expect("config is required");
 
@@ -245,9 +246,9 @@ pub enum CircuitBreakerState {
 impl From<gateway_resilience::CircuitState> for CircuitBreakerState {
     fn from(state: gateway_resilience::CircuitState) -> Self {
         match state {
-            gateway_resilience::CircuitState::Closed => CircuitBreakerState::Closed,
-            gateway_resilience::CircuitState::Open => CircuitBreakerState::Open,
-            gateway_resilience::CircuitState::HalfOpen => CircuitBreakerState::HalfOpen,
+            gateway_resilience::CircuitState::Closed => Self::Closed,
+            gateway_resilience::CircuitState::Open => Self::Open,
+            gateway_resilience::CircuitState::HalfOpen => Self::HalfOpen,
         }
     }
 }

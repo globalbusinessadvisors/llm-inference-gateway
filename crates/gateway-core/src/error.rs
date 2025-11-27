@@ -141,15 +141,15 @@ impl GatewayError {
             Self::Provider { status_code, .. } => status_code
                 .and_then(|code| StatusCode::from_u16(code).ok())
                 .unwrap_or(StatusCode::BAD_GATEWAY),
-            Self::CircuitBreakerOpen { .. } => StatusCode::SERVICE_UNAVAILABLE,
+            Self::CircuitBreakerOpen { .. } | Self::NoHealthyProviders { .. } => {
+                StatusCode::SERVICE_UNAVAILABLE
+            }
             Self::Timeout { .. } => StatusCode::GATEWAY_TIMEOUT,
-            Self::NoHealthyProviders { .. } => StatusCode::SERVICE_UNAVAILABLE,
-            Self::ModelNotFound { .. } => StatusCode::NOT_FOUND,
-            Self::ProviderNotFound { .. } => StatusCode::NOT_FOUND,
+            Self::ModelNotFound { .. } | Self::ProviderNotFound { .. } => StatusCode::NOT_FOUND,
             Self::PayloadTooLarge { .. } => StatusCode::PAYLOAD_TOO_LARGE,
-            Self::Streaming { .. } => StatusCode::INTERNAL_SERVER_ERROR,
-            Self::Configuration { .. } => StatusCode::INTERNAL_SERVER_ERROR,
-            Self::Internal { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::Streaming { .. } | Self::Configuration { .. } | Self::Internal { .. } => {
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
         }
     }
 
@@ -158,11 +158,11 @@ impl GatewayError {
     pub fn is_retryable(&self) -> bool {
         match self {
             Self::Provider { retryable, .. } => *retryable,
-            Self::Timeout { .. } => true,
-            Self::RateLimit { .. } => true,
-            Self::CircuitBreakerOpen { .. } => true,
-            Self::NoHealthyProviders { .. } => true,
-            Self::Streaming { .. } => true,
+            Self::Timeout { .. }
+            | Self::RateLimit { .. }
+            | Self::CircuitBreakerOpen { .. }
+            | Self::NoHealthyProviders { .. }
+            | Self::Streaming { .. } => true,
             _ => false,
         }
     }
@@ -171,20 +171,18 @@ impl GatewayError {
     #[must_use]
     pub fn error_type(&self) -> &'static str {
         match self {
-            Self::Validation { .. } => "invalid_request_error",
+            Self::Validation { .. } | Self::PayloadTooLarge { .. } => "invalid_request_error",
             Self::Authentication { .. } => "authentication_error",
             Self::Authorization { .. } => "authorization_error",
             Self::RateLimit { .. } => "rate_limit_error",
             Self::Provider { .. } => "provider_error",
-            Self::CircuitBreakerOpen { .. } => "service_unavailable_error",
+            Self::CircuitBreakerOpen { .. } | Self::NoHealthyProviders { .. } => {
+                "service_unavailable_error"
+            }
             Self::Timeout { .. } => "timeout_error",
-            Self::NoHealthyProviders { .. } => "service_unavailable_error",
-            Self::ModelNotFound { .. } => "not_found_error",
-            Self::ProviderNotFound { .. } => "not_found_error",
-            Self::PayloadTooLarge { .. } => "invalid_request_error",
+            Self::ModelNotFound { .. } | Self::ProviderNotFound { .. } => "not_found_error",
             Self::Streaming { .. } => "streaming_error",
-            Self::Configuration { .. } => "internal_error",
-            Self::Internal { .. } => "internal_error",
+            Self::Configuration { .. } | Self::Internal { .. } => "internal_error",
         }
     }
 
