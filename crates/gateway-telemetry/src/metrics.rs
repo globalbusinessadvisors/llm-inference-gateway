@@ -235,26 +235,28 @@ impl Metrics {
     pub fn record_request(&self, metrics: &RequestMetrics) {
         let status = if metrics.success { "success" } else { "error" };
         let streaming = if metrics.streaming { "true" } else { "false" };
+        let model = metrics.model.as_str();
+        let provider = metrics.provider.as_str();
 
         // Increment request counter
         self.requests_total
-            .with_label_values(&[&metrics.model, &metrics.provider, status, streaming])
+            .with_label_values(&[model, provider, status, streaming])
             .inc();
 
         // Record latency
         self.request_latency
-            .with_label_values(&[&metrics.model, &metrics.provider, streaming])
+            .with_label_values(&[model, provider, streaming])
             .observe(metrics.latency.as_secs_f64());
 
         // Record tokens
         if let Some(input) = metrics.input_tokens {
             self.tokens_total
-                .with_label_values(&[&metrics.model, &metrics.provider, "input"])
+                .with_label_values(&[model, provider, "input"])
                 .inc_by(f64::from(input));
         }
         if let Some(output) = metrics.output_tokens {
             self.tokens_total
-                .with_label_values(&[&metrics.model, &metrics.provider, "output"])
+                .with_label_values(&[model, provider, "output"])
                 .inc_by(f64::from(output));
         }
 

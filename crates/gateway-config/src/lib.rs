@@ -18,7 +18,7 @@ pub use loader::{load_config, ConfigError, ConfigLoader, ConfigSource};
 pub use schema::{
     GatewayConfig, ServerConfig, ProviderConfig, RoutingConfig,
     ResilienceConfig, ObservabilityConfig, SecurityConfig,
-    CircuitBreakerConfig, RetryConfig, RateLimitConfig,
+    CircuitBreakerConfig, RetryConfig, RateLimitConfig, RateLimitKeyBy,
     AuthConfig, TlsConfig,
 };
 pub use hot_reload::ConfigWatcher;
